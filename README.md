@@ -1,5 +1,6 @@
 # SmartWater AI
-
+  LIVE WEB: https://smartwater-ai-d88c.onrender.com
+  
 A production-style AI/ML application that forecasts **daily water consumption**
 and classifies it into **demand levels**, built on a real Kaggle dataset of
 daily municipal water consumption across five regions.
@@ -43,7 +44,6 @@ This project:
 | Columns | `region`, `date`, `consumption_liters` |
 | Regions | Central, East, North, South, West (5) |
 | Days per region | 180 |
-| Date range | 2023-01-01 → 2023-06-29 |
 
 The dataset contains **only** region, date, and consumption. There is **no**
 temperature, humidity, or holiday column, and this project does **not**
@@ -99,11 +99,6 @@ because this is a time-series problem. The split is performed per region so
 every region's test set is its own most recent 20% of days (true
 out-of-sample forecasting). The regression and classification tasks use the
 **same split**:
-
-| | Rows | Period |
-|---|---|---|
-| Train | 660 | 2023-01-15 → 2023-05-26 |
-| Test | 170 | 2023-05-27 → 2023-06-29 |
 
 Why chronological: shuffling would let the model "peek" at the future during
 training. Deployed forecasts only ever predict days after the training data,
