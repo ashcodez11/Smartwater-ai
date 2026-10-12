@@ -63,10 +63,22 @@ class DemandPredictor:
         self._buffer = {region: list(g[TARGET_COL].values)
                         for region, g in self.history.groupby(REGION_COL, sort=False)}
 
-    def _lag_features(self, region):
+    def _known_values(self, region, buffer=None):
+        """The list of known consumption values for a region.
+
+        `buffer` overrides the internal history. A recursive forecast passes a
+        private copy, so the shared state is never written to and concurrent
+        requests cannot influence each other (see forecast()).
+        """
+        source = self._buffer if buffer is None else buffer
+        if region not in source:
+            raise ValueError(f"Unknown region '{region}'. Available: {self.regions}")
+        return source[region]
+
+    def _lag_features(self, region, buffer=None):
         """Derive lag_1, lag_7, rolling_mean_7, rolling_mean_14 for a region
         from its buffer of known (past-only) consumption values."""
-        vals = self._buffer[region]
+        vals = self._known_values(region, buffer)
         if not vals:
             raise ValueError(f"No history available for region '{region}'")
 
@@ -76,12 +88,12 @@ class DemandPredictor:
         rolling_mean_14 = float(np.mean(vals[-14:])) if len(vals) >= 14 else float(np.mean(vals))
         return lag_1, lag_7, rolling_mean_7, rolling_mean_14
 
-    def build_feature_row(self, region, date):
+    def build_feature_row(self, region, date, buffer=None):
+        """Feature vector for (region, date). Read-only: passing `buffer`
+        evaluates the lags against a private history without touching the
+        shared one."""
         date = pd.to_datetime(date)
-        if region not in self._buffer:
-            raise ValueError(f"Unknown region '{region}'. Available: {self.regions}")
-
-        lag_1, lag_7, rolling_mean_7, rolling_mean_14 = self._lag_features(region)
+        lag_1, lag_7, rolling_mean_7, rolling_mean_14 = self._lag_features(region, buffer)
 
         row = {
             "month": date.month,
@@ -98,23 +110,23 @@ class DemandPredictor:
                 row[col] = 1 if col == f"region_{region}" else 0
         return pd.DataFrame([row])[self.feature_columns]
 
-    def predict(self, region, date):
-        X = self.build_feature_row(region, date)
+    def predict(self, region, date, buffer=None):
+        X = self.build_feature_row(region, date, buffer)
         pred = float(self.model.predict(X)[0])
         return round(pred, 3)
 
-    def classify(self, region, date):
+    def classify(self, region, date, buffer=None):
         """Predict the demand level (LOW/NORMAL/HIGH/VERY HIGH) for a date."""
         if self.classifier is None:
             raise RuntimeError("Classification model not loaded (train_classifier.py not run?)")
-        X = self.build_feature_row(region, date)
+        X = self.build_feature_row(region, date, buffer)
         return str(self.classifier.predict(X)[0])
 
-    def predict_with_level(self, region, date):
+    def predict_with_level(self, region, date, buffer=None):
         """Return (predicted_consumption, demand_level) for a date."""
-        consumption = self.predict(region, date)
+        consumption = self.predict(region, date, buffer)
         try:
-            level = self.classify(region, date)
+            level = self.classify(region, date, buffer)
         except RuntimeError:
             level = None
         return consumption, level
@@ -134,28 +146,27 @@ class DemandPredictor:
         if region not in self._buffer:
             raise ValueError(f"Unknown region '{region}'. Available: {self.regions}")
 
-        self.reset_buffer()
         if start_date is None:
             last_date = self.history[self.history[REGION_COL] == region][DATE_COL].max()
             start_date = last_date + pd.Timedelta(days=1)
         else:
             start_date = pd.to_datetime(start_date)
 
+        # A PRIVATE copy of the history is the only thing this method writes to.
+        # Predicted days still feed forward inside this forecast (recursive
+        # multi-step semantics), but the shared buffer keeps real readings only.
+        # That makes the method a pure function of its arguments: two requests
+        # — or two threads — can never affect each other's results.
+        working = {r: list(v) for r, v in self._buffer.items()}
+
         results = []
         current = start_date
-        # Work on a private copy: predicted days feed forward within THIS
-        # forecast, but self._buffer keeps only real (dataset) readings so
-        # later /api/predict calls stay reproducible.
-        actual_history = list(self._buffer[region])
-        try:
-            for _ in range(days):
-                pred = self.predict(region, current)
-                row = {"date": current.strftime("%Y-%m-%d"), "predicted_consumption": round(pred, 2)}
-                if self.classifier is not None:
-                    row["demand_level"] = self.classify(region, current)
-                results.append(row)
-                self._buffer[region].append(pred)  # feed prediction back for next day
-                current = current + pd.Timedelta(days=1)
-        finally:
-            self._buffer[region] = actual_history
+        for _ in range(days):
+            pred = self.predict(region, current, buffer=working)
+            row = {"date": current.strftime("%Y-%m-%d"), "predicted_consumption": round(pred, 2)}
+            if self.classifier is not None:
+                row["demand_level"] = self.classify(region, current, buffer=working)
+            results.append(row)
+            working[region].append(pred)  # feed prediction back for the next day
+            current = current + pd.Timedelta(days=1)
         return results

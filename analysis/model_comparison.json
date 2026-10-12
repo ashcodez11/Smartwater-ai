@@ -1,0 +1,378 @@
+{
+  "protocol": {
+    "seed": 42,
+    "split": "chronological per-region 80/20 (final test window untouched by selection)",
+    "rolling_origins": [
+      "50% of each region's training timeline",
+      "60% of each region's training timeline",
+      "70% of each region's training timeline",
+      "80% of each region's training timeline"
+    ],
+    "origin_horizon_days": 30,
+    "selection_criterion": "mean rolling-origin MAE (test window only reported, never used to choose)"
+  },
+  "baseline_reproduction": {
+    "stored_in_metrics_json": {
+      "RandomForest": {
+        "MAE": 3564.7347,
+        "RMSE": 4149.2871,
+        "R2": -0.0211
+      }
+    },
+    "reproduced": {
+      "RandomForest": {
+        "MAE": 3564.7347,
+        "RMSE": 4149.2871,
+        "R2": -0.0211
+      },
+      "TrainMeanReference": {
+        "MAE": 3515.4752,
+        "RMSE": 4126.2375,
+        "R2": -0.0098
+      }
+    },
+    "max_abs_error_vs_stored": 0.0,
+    "test_rows": 170,
+    "train_rows": 660
+  },
+  "rolling_origin_mae": {
+    "TrainMean": {
+      "mean": 3960.209,
+      "per_origin": [
+        3709.054,
+        4029.737,
+        4157.939,
+        3944.108
+      ]
+    },
+    "RegionMean": {
+      "mean": 3980.841,
+      "per_origin": [
+        3719.267,
+        4052.149,
+        4193.61,
+        3958.336
+      ]
+    },
+    "Persistence": {
+      "mean": 5102.449,
+      "per_origin": [
+        5214.936,
+        5228.373,
+        5121.723,
+        4844.766
+      ]
+    },
+    "SeasonalNaive7": {
+      "mean": 5310.765,
+      "per_origin": [
+        5160.161,
+        5367.13,
+        5204.616,
+        5511.153
+      ]
+    },
+    "Ridge": {
+      "mean": 4036.293,
+      "per_origin": [
+        3790.906,
+        4048.123,
+        4300.046,
+        4006.096
+      ]
+    },
+    "RandomForestDeployed": {
+      "mean": 4024.933,
+      "per_origin": [
+        3749.749,
+        4077.351,
+        4221.433,
+        4051.196
+      ]
+    },
+    "RandomForestStronger": {
+      "mean": 4008.295,
+      "per_origin": [
+        3751.853,
+        4063.598,
+        4217.601,
+        4000.129
+      ]
+    },
+    "HistGradientBoosting": {
+      "mean": 4227.649,
+      "per_origin": [
+        3924.36,
+        4198.063,
+        4478.773,
+        4309.398
+      ]
+    },
+    "RegionSpecificRF": {
+      "mean": 4177.837,
+      "per_origin": [
+        3906.875,
+        4333.341,
+        4435.247,
+        4035.887
+      ]
+    }
+  },
+  "selected_by_rolling_origin": "TrainMean",
+  "final_test_window": {
+    "date_range": [
+      "2023-05-27",
+      "2023-06-29"
+    ],
+    "results": {
+      "TrainMean": {
+        "MAE": 3515.4752,
+        "RMSE": 4126.2375,
+        "R2": -0.0098
+      },
+      "RegionMean": {
+        "MAE": 3513.5748,
+        "RMSE": 4129.1383,
+        "R2": -0.0112
+      },
+      "Persistence": {
+        "MAE": 4573.2937,
+        "RMSE": 5595.92,
+        "R2": -0.8572
+      },
+      "SeasonalNaive7": {
+        "MAE": 4399.5464,
+        "RMSE": 5584.3203,
+        "R2": -0.8495
+      },
+      "Ridge": {
+        "MAE": 3535.6292,
+        "RMSE": 4117.2011,
+        "R2": -0.0054
+      },
+      "RandomForestDeployed": {
+        "MAE": 3564.7347,
+        "RMSE": 4149.2871,
+        "R2": -0.0211
+      },
+      "RandomForestStronger": {
+        "MAE": 3501.4698,
+        "RMSE": 4091.4956,
+        "R2": 0.0072
+      },
+      "HistGradientBoosting": {
+        "MAE": 3715.2308,
+        "RMSE": 4427.0313,
+        "R2": -0.1624
+      },
+      "RegionSpecificRF": {
+        "MAE": 3815.2252,
+        "RMSE": 4391.6612,
+        "R2": -0.1439
+      },
+      "DeployedRFArtifact": {
+        "MAE": 3564.7347,
+        "RMSE": 4149.2871,
+        "R2": -0.0211
+      }
+    },
+    "per_region": {
+      "TrainMean": {
+        "Central": {
+          "MAE": 2843.7282,
+          "RMSE": 3386.8837,
+          "R2": -0.003
+        },
+        "East": {
+          "MAE": 3430.5482,
+          "RMSE": 4091.2788,
+          "R2": -0.0033
+        },
+        "North": {
+          "MAE": 3962.3147,
+          "RMSE": 4369.0413,
+          "R2": -0.001
+        },
+        "South": {
+          "MAE": 3152.5762,
+          "RMSE": 3987.6347,
+          "R2": -0.0086
+        },
+        "West": {
+          "MAE": 4188.2089,
+          "RMSE": 4682.9355,
+          "R2": -0.1622
+        }
+      },
+      "RegionMean": {
+        "Central": {
+          "MAE": 2819.1625,
+          "RMSE": 3382.6949,
+          "R2": -0.0005
+        },
+        "East": {
+          "MAE": 3430.5482,
+          "RMSE": 4110.8913,
+          "R2": -0.013
+        },
+        "North": {
+          "MAE": 3962.3147,
+          "RMSE": 4379.5854,
+          "R2": -0.0058
+        },
+        "South": {
+          "MAE": 3165.8141,
+          "RMSE": 3971.0204,
+          "R2": -0.0002
+        },
+        "West": {
+          "MAE": 4190.0346,
+          "RMSE": 4685.8396,
+          "R2": -0.1636
+        }
+      },
+      "RandomForestStronger": {
+        "Central": {
+          "MAE": 2818.1194,
+          "RMSE": 3356.3087,
+          "R2": 0.015
+        },
+        "East": {
+          "MAE": 3497.5055,
+          "RMSE": 4204.3796,
+          "R2": -0.0596
+        },
+        "North": {
+          "MAE": 3846.521,
+          "RMSE": 4272.8152,
+          "R2": 0.0426
+        },
+        "South": {
+          "MAE": 3235.9671,
+          "RMSE": 3992.4441,
+          "R2": -0.0111
+        },
+        "West": {
+          "MAE": 4109.236,
+          "RMSE": 4534.7003,
+          "R2": -0.0898
+        }
+      },
+      "DeployedRFArtifact": {
+        "Central": {
+          "MAE": 2852.3825,
+          "RMSE": 3419.232,
+          "R2": -0.0223
+        },
+        "East": {
+          "MAE": 3659.3992,
+          "RMSE": 4382.7211,
+          "R2": -0.1514
+        },
+        "North": {
+          "MAE": 3826.6288,
+          "RMSE": 4222.3457,
+          "R2": 0.0651
+        },
+        "South": {
+          "MAE": 3375.5589,
+          "RMSE": 4089.2174,
+          "R2": -0.0607
+        },
+        "West": {
+          "MAE": 4109.704,
+          "RMSE": 4542.425,
+          "R2": -0.0935
+        }
+      }
+    }
+  },
+  "significance_vs_deployed": {
+    "TrainMean": {
+      "mae_improvement_vs_deployed": 49.259,
+      "bootstrap_95ci_of_mae_difference": [
+        -177.98,
+        79.212
+      ],
+      "significant": false
+    },
+    "RegionMean": {
+      "mae_improvement_vs_deployed": 51.16,
+      "bootstrap_95ci_of_mae_difference": [
+        -179.807,
+        78.292
+      ],
+      "significant": false
+    },
+    "Persistence": {
+      "mae_improvement_vs_deployed": -1008.559,
+      "bootstrap_95ci_of_mae_difference": [
+        516.832,
+        1494.72
+      ],
+      "significant": false
+    },
+    "SeasonalNaive7": {
+      "mae_improvement_vs_deployed": -834.812,
+      "bootstrap_95ci_of_mae_difference": [
+        324.297,
+        1324.117
+      ],
+      "significant": false
+    },
+    "Ridge": {
+      "mae_improvement_vs_deployed": 29.106,
+      "bootstrap_95ci_of_mae_difference": [
+        -163.721,
+        110.075
+      ],
+      "significant": false
+    },
+    "RandomForestDeployed": {
+      "mae_improvement_vs_deployed": 0.0,
+      "bootstrap_95ci_of_mae_difference": [
+        -0.0,
+        0.0
+      ],
+      "significant": false
+    },
+    "RandomForestStronger": {
+      "mae_improvement_vs_deployed": 63.265,
+      "bootstrap_95ci_of_mae_difference": [
+        -127.716,
+        2.466
+      ],
+      "significant": false
+    },
+    "HistGradientBoosting": {
+      "mae_improvement_vs_deployed": -150.496,
+      "bootstrap_95ci_of_mae_difference": [
+        -60.144,
+        356.987
+      ],
+      "significant": false
+    },
+    "RegionSpecificRF": {
+      "mae_improvement_vs_deployed": -250.49,
+      "bootstrap_95ci_of_mae_difference": [
+        52.556,
+        447.506
+      ],
+      "significant": false
+    }
+  },
+  "best_vs_deployed": {
+    "mae_improvement_vs_deployed": 49.259,
+    "bootstrap_95ci_of_mae_difference": [
+      -177.98,
+      79.212
+    ],
+    "significant": false,
+    "best": "TrainMean"
+  },
+  "deployment_recommendation": {
+    "replace_production_model": false,
+    "recommended_candidate": null,
+    "reason": "no candidate's MAE advantage over the deployed RandomForest is statistically significant (every 95% bootstrap CI spans zero); the constants win by <=2% and are operationally unsuitable as the API's forecaster. Do not force a replacement."
+  }
+}
