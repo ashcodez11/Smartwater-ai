@@ -1,0 +1,20 @@
+# SmartWater AI — runtime dependencies
+#
+# Versions below are EXACTLY the ones the reported metrics were produced and
+# verified with (Python 3.14.6 on macOS). Pinning keeps a fresh install
+# reproducible instead of silently drifting to a newer scikit-learn, which
+# could change the numeric results.
+#
+# Direct dependencies
+Flask==3.1.3
+pandas==3.0.5
+numpy==2.5.2
+scikit-learn==1.9.0
+joblib==1.6.0
+
+# Numerical routines used by the signal audit (Ljung-Box chi-square p-values)
+scipy==1.18.1
+
+# Production WSGI server (see wsgi.py).
+# The development server used by `python app.py` is for local demos only.
+gunicorn==23.0.0

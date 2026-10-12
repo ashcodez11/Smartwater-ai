@@ -1,0 +1,25 @@
+{
+  "method": "training-set consumption quantiles (fit on TRAIN ONLY)",
+  "quantiles": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "values": {
+    "q25": 9382.2825,
+    "q50": 13140.425,
+    "q75": 16431.2825
+  },
+  "classes": [
+    "LOW",
+    "NORMAL",
+    "HIGH",
+    "VERY HIGH"
+  ],
+  "rule": [
+    "< q25 -> LOW",
+    "q25 <= x < q50 -> NORMAL",
+    "q50 <= x < q75 -> HIGH",
+    ">= q75 -> VERY HIGH"
+  ]
+}

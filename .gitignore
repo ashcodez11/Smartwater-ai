@@ -1,0 +1,36 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------- Virtual environments ----------
+venv/
+.venv/
+env/
+
+# ---------- Local tooling / agent state ----------
+.freebuff/
+*.log
+*.pid
+
+# ---------- OS / editor ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ---------- Secrets (never commit keys or env files) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------- Local scratch ----------
+scratch/
+tmp/

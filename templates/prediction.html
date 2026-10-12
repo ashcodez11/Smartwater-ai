@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartWater AI — Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page-in">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="brand">
+                <span class="brand-mark">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 2.2c3.7 4.5 6.6 8.2 6.6 12.1A6.6 6.6 0 1 1 5.4 14.3c0-3.9 2.9-7.6 6.6-12.1z" fill="#fff"/>
+                        <path d="M9.3 13.6a2.7 2.7 0 0 0 2.2 2.7" stroke="rgba(10,31,51,.4)" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span>
+                    <span class="brand-name">SmartWater AI</span><br>
+                    <span class="brand-sub">Demand Intelligence</span>
+                </span>
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/prediction" class="active">Prediction</a>
+                <a href="/forecast">Forecast</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/model-performance">Model Lab</a>
+            </nav>
+            <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+    </header>
+
+    <main class="page">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Prediction</span>
+                <h1 class="section-title">Water Demand Prediction</h1>
+                <p class="lead">Choose a region and date. The model derives the region's recent consumption history and predicts both the daily demand and its demand level.</p>
+            </div>
+
+            <div id="error-container"></div>
+
+            <section class="grid-1-2">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Input</div>
+                            <div class="card-sub">Region and date</div>
+                        </div>
+                    </div>
+                    <form id="prediction-form">
+                        <div class="field">
+                            <label for="region">Region</label>
+                            <select id="region" required>
+                                {% for region in regions %}
+                                <option value="{{ region }}">{{ region }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="date">Prediction date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="predict-btn" style="width:100%;justify-content:center;margin-top:24px;">Predict Demand</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Prediction</div>
+                            <div class="card-sub" id="result-sub">Awaiting input</div>
+                        </div>
+                    </div>
+                    <div id="result-content">
+                        <div class="center muted" style="padding:64px 0;">
+                            <div style="margin-bottom:16px;opacity:.75;">
+                                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.2c3.7 4.5 6.6 8.2 6.6 12.1A6.6 6.6 0 1 1 5.4 14.3c0-3.9 2.9-7.6 6.6-12.1z" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M9.3 13.6a2.7 2.7 0 0 0 2.2 2.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                            </div>
+                            Select a region and date, then run the analysis to see the predicted demand.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span><b>SmartWater AI</b> &mdash; water demand forecasting &amp; classification demo</span>
+            <span>Real Kaggle dataset &middot; 5 regions &middot; 900 days</span>
+        </div>
+    </footer>
+
+    <script src="/static/app.js"></script>
+    <script>
+        // Default to tomorrow (forecasting beyond the known data)
+        (function () {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            document.getElementById('date').valueAsDate = d;
+        })();
+
+        const resultContent = document.getElementById('result-content');
+
+        function scanningState() {
+            resultContent.innerHTML = `
+                <div class="ai-scan" role="status" aria-live="polite">
+                    <div class="scan-rings">
+                        <span class="scan-ring"></span>
+                        <span class="scan-ring r2"></span>
+                        <span class="scan-ring r3"></span>
+                        <span class="scan-core">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.2c3.7 4.5 6.6 8.2 6.6 12.1A6.6 6.6 0 1 1 5.4 14.3c0-3.9 2.9-7.6 6.6-12.1z" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M9.3 13.6a2.7 2.7 0 0 0 2.2 2.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="scan-line"></span>
+                    </div>
+                    <div class="scan-label">Analyzing demand…</div>
+                    <div class="scan-sub">Reading ${document.getElementById('region').value}'s recent consumption and calendar features</div>
+                </div>`;
+        }
+
+        document.getElementById('prediction-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('predict-btn');
+            btn.disabled = true;
+            btn.textContent = 'Analyzing…';
+
+            const region = document.getElementById('region').value;
+            const date = document.getElementById('date').value;
+            scanningState();
+
+            try {
+                const res = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ region, date }),
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Prediction failed');
+
+                // hold the scan briefly so the analysis reads as a scan, not a flash
+                await new Promise(r => setTimeout(r, 700));
+
+                const f = data.features;
+                const d = new Date(data.date);
+                const monthName = d.toLocaleDateString('en-US', { month: 'long' });
+                const dowName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                const dayType = f.is_weekend ? 'Weekend' : 'Weekday';
+
+                document.getElementById('result-sub').textContent =
+                    `${data.region} · ${d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })} · ${dayType}`;
+
+                resultContent.innerHTML = `
+                    <div class="result-hero stagger">
+                        <div class="result-value">${fmt(data.predicted_consumption)}</div>
+                        <div class="result-unit">liters per day</div>
+                        <div style="margin-top:22px;">${levelBadge(data.demand_level, 'badge-xl badge-pop')}</div>
+                        <div class="result-context">Predicted demand level for ${data.region}</div>
+                    </div>
+                    <div class="explain fade-in">
+                        <b>AI reasoning signals</b>
+                        <div style="margin-top:8px;font-size:0.88rem;">
+                            The model read ${data.region}'s recent consumption and calendar features — nothing else. The four
+                            time-series signals (lags and rolling averages) carry about 80% of the model's feature importance;
+                            day of week, month and region add context. The regression predicts ${fmt(data.predicted_consumption)} L/day,
+                            which the classifier maps to <b>${data.demand_level}</b>.
+                        </div>
+                        <div class="signal-grid" style="margin-top:16px;">
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>lag_1</span><span class="signal-v">${fmt(f.lag_1)} L</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>lag_7</span><span class="signal-v">${fmt(f.lag_7)} L</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>rolling_mean_7</span><span class="signal-v">${fmt(f.rolling_mean_7)} L</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>rolling_mean_14</span><span class="signal-v">${fmt(f.rolling_mean_14)} L</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>region</span><span class="signal-v">${data.region}</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>month</span><span class="signal-v">${monthName}</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>day_of_week</span><span class="signal-v">${dowName}</span></div>
+                            <div class="signal"><span class="signal-k"><span class="signal-dot"></span>day_type</span><span class="signal-v">${dayType}</span></div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                console.error('Prediction error:', err);
+                resultContent.innerHTML = `<div class="error-box"><div class="error">${err.message || 'Failed to connect to the prediction service.'}</div></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Predict Demand';
+            }
+        });
+    </script>
+</body>
+</html>

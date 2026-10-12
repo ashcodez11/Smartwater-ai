@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartWater AI — Model Performance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page-in">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="brand">
+                <span class="brand-mark">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 2.2c3.7 4.5 6.6 8.2 6.6 12.1A6.6 6.6 0 1 1 5.4 14.3c0-3.9 2.9-7.6 6.6-12.1z" fill="#fff"/>
+                        <path d="M9.3 13.6a2.7 2.7 0 0 0 2.2 2.7" stroke="rgba(10,31,51,.4)" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span>
+                    <span class="brand-name">SmartWater AI</span><br>
+                    <span class="brand-sub">Demand Intelligence</span>
+                </span>
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/prediction">Prediction</a>
+                <a href="/forecast">Forecast</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/model-performance" class="active">Model Lab</a>
+            </nav>
+            <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+    </header>
+
+    <main class="page">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Model Lab</span>
+                <h1 class="section-title">AI Model Performance</h1>
+                <p class="lead">Honest evaluation of the regression and classification models on the chronological test set (last 20% of the timeline).</p>
+            </div>
+
+            <div id="error-container"></div>
+
+            <!-- Regression -->
+            <h2 class="section-title" style="font-size:1.25rem;">Regression &mdash; predicting daily consumption</h2>
+            <p class="muted" style="margin-top:6px;">Metrics in liters/day on the held-out test period.</p>
+
+            <section class="grid-3 mt">
+                <div class="model-card" id="baseline-card">
+                    <div class="model-name">Baseline</div>
+                    <div class="card-sub" style="margin-top:2px;">Previous-day naive forecast</div>
+                    <div class="mt"></div>
+                    <div class="metric-row"><span class="metric-label">MAE</span><span class="metric-value" id="baseline-mae">—</span></div>
+                    <div class="metric-row"><span class="metric-label">RMSE</span><span class="metric-value" id="baseline-rmse">—</span></div>
+                    <div class="metric-row"><span class="metric-label">R²</span><span class="metric-value" id="baseline-r2">—</span></div>
+                </div>
+                <div class="model-card" id="rf-card">
+                    <div class="model-name">Random Forest <span class="tag-best" id="rf-badge"></span></div>
+                    <div class="card-sub" style="margin-top:2px;">300 trees · depth 10</div>
+                    <div class="mt"></div>
+                    <div class="metric-row"><span class="metric-label">MAE</span><span class="metric-value accent" id="rf-mae">—</span></div>
+                    <div class="metric-row"><span class="metric-label">RMSE</span><span class="metric-value accent" id="rf-rmse">—</span></div>
+                    <div class="metric-row"><span class="metric-label">R²</span><span class="metric-value accent" id="rf-r2">—</span></div>
+                </div>
+                <div class="model-card" id="gb-card">
+                    <div class="model-name">Gradient Boosting <span class="tag-best" id="gb-badge"></span></div>
+                    <div class="card-sub" style="margin-top:2px;">300 stages · depth 3</div>
+                    <div class="mt"></div>
+                    <div class="metric-row"><span class="metric-label">MAE</span><span class="metric-value" id="gb-mae">—</span></div>
+                    <div class="metric-row"><span class="metric-label">RMSE</span><span class="metric-value" id="gb-rmse">—</span></div>
+                    <div class="metric-row"><span class="metric-label">R²</span><span class="metric-value" id="gb-r2">—</span></div>
+                </div>
+            </section>
+
+            <section class="grid-2 mt">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">R² Comparison</div>
+                            <div class="card-sub">Higher is better</div>
+                        </div>
+                    </div>
+                    <div class="chart-box-sm"><canvas id="r2Chart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">MAE Comparison</div>
+                            <div class="card-sub">Lower is better</div>
+                        </div>
+                    </div>
+                    <div class="chart-box-sm"><canvas id="maeChart"></canvas></div>
+                </div>
+            </section>
+
+            <!-- Classification -->
+            <h2 class="section-title mt-lg" style="font-size:1.25rem;">Classification &mdash; demand levels</h2>
+            <p class="muted" style="margin-top:6px;">Classes LOW / NORMAL / HIGH / VERY HIGH, thresholded at training-set quartiles (no test leakage).</p>
+
+            <section class="grid-3 mt">
+                <div class="model-card" id="lr-card">
+                    <div class="model-name">Logistic Regression <span class="tag-best" id="lr-badge"></span></div>
+                    <div class="card-sub" style="margin-top:2px;">Standardized features</div>
+                    <div class="mt"></div>
+                    <div class="metric-row"><span class="metric-label">Accuracy</span><span class="metric-value" id="lr-acc">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Precision (macro)</span><span class="metric-value" id="lr-prec">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Recall (macro)</span><span class="metric-value" id="lr-rec">—</span></div>
+                    <div class="metric-row"><span class="metric-label">F1 (macro)</span><span class="metric-value" id="lr-f1m">—</span></div>
+                    <div class="metric-row"><span class="metric-label">F1 (weighted)</span><span class="metric-value" id="lr-f1w">—</span></div>
+                </div>
+                <div class="model-card" id="rfc-card">
+                    <div class="model-name">Random Forest <span class="tag-best" id="rfc-badge"></span></div>
+                    <div class="card-sub" style="margin-top:2px;">300 trees · depth 10</div>
+                    <div class="mt"></div>
+                    <div class="metric-row"><span class="metric-label">Accuracy</span><span class="metric-value accent" id="rfc-acc">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Precision (macro)</span><span class="metric-value accent" id="rfc-prec">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Recall (macro)</span><span class="metric-value accent" id="rfc-rec">—</span></div>
+                    <div class="metric-row"><span class="metric-label">F1 (macro)</span><span class="metric-value accent" id="rfc-f1m">—</span></div>
+                    <div class="metric-row"><span class="metric-label">F1 (weighted)</span><span class="metric-value accent" id="rfc-f1w">—</span></div>
+                </div>
+                <div class="model-card">
+                    <div class="model-name">Per-class F1 <span class="tag-best" id="f1-best-tag"></span></div>
+                    <div class="card-sub" style="margin-top:2px;">Best classifier by class</div>
+                    <div class="mt" id="per-class-rows"></div>
+                </div>
+            </section>
+
+            <section class="grid-2 mt">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Confusion Matrix</div>
+                            <div class="card-sub" id="cm-sub">Best classifier on the test set</div>
+                        </div>
+                    </div>
+                    <div class="cm-wrap" id="cm-grid"></div>
+                    <div class="cm-cap">Rows = actual class &middot; Columns = predicted class. Test period 2023-05-27 → 2023-06-29.</div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Training Information</div>
+                            <div class="card-sub">Split and dataset details</div>
+                        </div>
+                    </div>
+                    <div id="training-info"></div>
+                </div>
+            </section>
+
+            <section class="grid-2-1 mt">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">What's Driving Water Demand?</div>
+                            <div class="card-sub">Feature importance from the best regression model (Random Forest)</div>
+                        </div>
+                    </div>
+                    <div id="feature-importance-bars" class="fbar-list">
+                        <div class="loading"><span class="spinner"></span>Loading feature importance…</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Demand Level Thresholds</div>
+                            <div class="card-sub">Training-set quartiles (L/day)</div>
+                        </div>
+                    </div>
+                    <div id="thresholds-info"></div>
+                </div>
+            </section>
+
+            <section class="mt">
+                <div class="card reveal">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Is R² ≈ 0 a bug? &mdash; Signal Audit</div>
+                            <div class="card-sub">Autocorrelation, Ljung-Box white-noise tests and the achievable information ceiling</div>
+                        </div>
+                    </div>
+                    <div id="signal-audit-body">
+                        <div class="loading"><span class="spinner"></span>Running signal audit…</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span><b>SmartWater AI</b> &mdash; water demand forecasting &amp; classification demo</span>
+            <span>Real Kaggle dataset &middot; 5 regions &middot; 900 days</span>
+        </div>
+    </footer>
+
+    <script src="/static/app.js"></script>
+    <script>
+        const metrics = {{ metrics | tojson }};
+        const cls = {{ classification_metrics | tojson }};
+
+        function regressionSection() {
+            const r = metrics.results;
+            setCount('baseline-mae', r.Baseline.MAE, 0); setCount('baseline-rmse', r.Baseline.RMSE, 0); setCount('baseline-r2', r.Baseline.R2, 4);
+            setCount('rf-mae', r.RandomForest.MAE, 0); setCount('rf-rmse', r.RandomForest.RMSE, 0); setCount('rf-r2', r.RandomForest.R2, 4);
+            setCount('gb-mae', r.GradientBoosting.MAE, 0); setCount('gb-rmse', r.GradientBoosting.RMSE, 0); setCount('gb-r2', r.GradientBoosting.R2, 4);
+
+            const best = metrics.best_model;
+            if (best === 'RandomForest') { document.getElementById('rf-card').classList.add('best'); document.getElementById('rf-badge').textContent = 'Best'; }
+            else if (best === 'GradientBoosting') { document.getElementById('gb-card').classList.add('best'); document.getElementById('gb-badge').textContent = 'Best'; }
+
+            createComparisonCharts();
+        }
+
+        function classificationSection() {
+            if (!cls.results) {
+                document.getElementById('error-container').innerHTML = '<div class="error">Classification metrics not found — run <code>python train_classifier.py</code>.</div>';
+                return;
+            }
+            const lr = cls.results.LogisticRegression, rf = cls.results.RandomForest;
+            setCount('lr-acc', lr.accuracy, 4); setCount('lr-prec', lr.precision_macro, 4); setCount('lr-rec', lr.recall_macro, 4);
+            setCount('lr-f1m', lr.f1_macro, 4); setCount('lr-f1w', lr.f1_weighted, 4);
+            setCount('rfc-acc', rf.accuracy, 4); setCount('rfc-prec', rf.precision_macro, 4); setCount('rfc-rec', rf.recall_macro, 4);
+            setCount('rfc-f1m', rf.f1_macro, 4); setCount('rfc-f1w', rf.f1_weighted, 4);
+
+            const best = cls.best_classifier;
+            if (best === 'RandomForest') { document.getElementById('rfc-card').classList.add('best'); document.getElementById('rfc-badge').textContent = 'Best'; }
+            else { document.getElementById('lr-card').classList.add('best'); document.getElementById('lr-badge') && (document.getElementById('lr-badge').textContent = 'Best'); }
+            document.getElementById('f1-best-tag').textContent = best === 'RandomForest' ? 'Random Forest' : 'Logistic Regression';
+
+            // per-class F1 of the best classifier
+            const bestRes = cls.results[best];
+            document.getElementById('per-class-rows').innerHTML = cls.classes.map(c => `
+                <div class="metric-row"><span class="metric-label">${c}</span>
+                <span class="metric-value">P ${bestRes.per_class[c].precision.toFixed(3)} · R ${bestRes.per_class[c].recall.toFixed(3)} · F1 ${bestRes.per_class[c].f1.toFixed(3)}</span></div>`).join('');
+
+            renderConfusionMatrix(best, bestRes.confusion_matrix);
+            renderThresholds(cls.thresholds);
+        }
+
+        function renderConfusionMatrix(best, cm) {
+            const classes = cls.classes;
+            const max = Math.max(...cm.flat());
+            document.getElementById('cm-sub').textContent = `${best} · test set`;
+            let html = '<div></div>' + classes.map(c => `<div class="cm-head">${c}</div>`).join('');
+            let n = 0;
+            cm.forEach((row, i) => {
+                html += `<div class="cm-rowlabel">${classes[i]}</div>`;
+                row.forEach((v, j) => {
+                    const t = max > 0 ? v / max : 0;
+                    const bg = `rgba(0, 85, 160, ${0.08 + 0.88 * t})`;
+                    const color = t > 0.45 ? '#fff' : '#12284b';
+                    const diag = i === j ? ' diag' : '';
+                    html += `<div class="cm-cell pop${diag}" style="background:${bg};color:${color};animation-delay:${(n * 0.045).toFixed(3)}s;">${v}</div>`;
+                    n += 1;
+                });
+            });
+            document.getElementById('cm-grid').innerHTML = html;
+        }
+
+        function renderThresholds(t) {
+            if (!t || !t.values) { document.getElementById('thresholds-info').innerHTML = '<p class="muted">Not available.</p>'; return; }
+            const rule = [
+                ['< q25', 'LOW'], ['q25 – q50', 'NORMAL'], ['q50 – q75', 'HIGH'], ['≥ q75', 'VERY HIGH'],
+            ];
+            const vals = [t.values.q25, t.values.q50, t.values.q75];
+            document.getElementById('thresholds-info').innerHTML =
+                `<div class="metric-row"><span class="metric-label">Method</span><span class="metric-value">${t.method}</span></div>` +
+                rule.map((r, i) => {
+                    const v = i < 3 ? fmt(vals[i]) : '—';
+                    return `<div class="metric-row"><span class="metric-label">${r[0]} → ${r[1]}</span><span class="metric-value">${v} L/day</span></div>`;
+                }).join('');
+        }
+
+        function createComparisonCharts() {
+            const r = metrics.results;
+            const labels = ['Baseline', 'Random Forest', 'Gradient Boosting'];
+            bar('r2Chart', labels, [r.Baseline.R2, r.RandomForest.R2, r.GradientBoosting.R2], 'R² score', 'rgba(0,85,160,0.7)');
+            bar('maeChart', labels, [r.Baseline.MAE, r.RandomForest.MAE, r.GradientBoosting.MAE], 'MAE (L/day)', 'rgba(18,40,75,0.5)');
+        }
+
+        function bar(id, labels, data, label, color) {
+            const ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label, data, backgroundColor: color, hoverBackgroundColor: CHART.accent, borderRadius: 8, maxBarThickness: 60 }] },
+                options: axisOpts(),
+            });
+        }
+
+        async function loadFeatureImportance() {
+            try {
+                const res = await fetch('/api/feature-importance');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                const top = data.feature_importance.slice(0, 8);
+                const max = top[0].importance;
+                const box = document.getElementById('feature-importance-bars');
+                box.innerHTML = top.map(f => `
+                    <div class="fbar">
+                        <span class="fbar-k" title="${f.feature}">${f.feature.replace(/_/g, ' ')}</span>
+                        <span class="fbar-track"><span class="fbar-fill" data-w="${(f.importance / max * 100).toFixed(1)}"></span></span>
+                        <span class="fbar-v">${f.importance.toFixed(4)}</span>
+                    </div>`).join('');
+                // animate bars into view
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        box.querySelectorAll('.fbar-fill').forEach((b, i) => {
+                            b.style.transitionDelay = (i * 70) + 'ms';
+                            b.style.width = b.dataset.w + '%';
+                        });
+                    }, 90);
+                });
+            } catch (err) {
+                console.error('Feature importance error:', err);
+                document.getElementById('feature-importance-bars').innerHTML = '<div class="error">Failed to load feature importance.</div>';
+            }
+        }
+
+        function trainingInfo() {
+            const info = document.getElementById('training-info');
+            const fmtDate = s => new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const rows = [
+                ['Split', 'Chronological 80/20 · no shuffle'],
+                ['Training rows', fmt(metrics.train_rows)],
+                ['Test rows', fmt(metrics.test_rows)],
+                ['Train period', `${fmtDate(metrics.train_date_range[0])} → ${fmtDate(metrics.train_date_range[1])}`],
+                ['Test period', `${fmtDate(metrics.test_date_range[0])} → ${fmtDate(metrics.test_date_range[1])}`],
+                ['Target', metrics.target_column],
+                ['Features', fmt(metrics.feature_columns.length)],
+                ['Best regression', metrics.best_model],
+                ['Best classifier', cls.best_classifier || '—'],
+                ['Regions', (metrics.dataset && metrics.dataset.regions.join(', ')) || '—'],
+            ];
+            info.innerHTML = rows.map(([k, v]) => `<div class="metric-row"><span class="metric-label">${k}</span><span class="metric-value">${v}</span></div>`).join('');
+        }
+
+        async function loadSignalAudit() {
+            const box = document.getElementById('signal-audit-body');
+            try {
+                const res = await fetch('/api/signal-audit');
+                const a = await res.json();
+                if (!res.ok) throw new Error(a.error || 'Failed');
+                const reg = a.ceiling.regression, cl = a.ceiling.classification;
+                const wn = a.white_noise_summary;
+                const rows = [
+                    ['Ljung-Box tests rejecting white noise',
+                        `${wn.tests_rejecting_white_noise} of ${wn.tests_run} (${wn['expected_false_positives_at_0.05']} expected by chance)`],
+                    ['Variance explained by region alone',
+                        `${(a.variance_share.share_explained_by_region_alone * 100).toFixed(2)}%`],
+                    ['Information ceiling (best constant predictor)',
+                        `MAE ${fmt(reg.ceiling_MAE, 0)} · R² ${reg.ceiling_R2.toFixed(4)}`],
+                    [`Deployed ${reg.deployed_model}`, `MAE ${fmt(reg.deployed_MAE, 0)} · R² ${reg.deployed_R2.toFixed(4)}`],
+                    ['Gap to the ceiling', `${reg.gap_vs_ceiling_percent}% — the model is essentially optimal for this data`],
+                    ['Classifier ceiling (majority class)',
+                        `accuracy ${cl.ceiling_accuracy.toFixed(4)} · chance for 4 balanced classes = ${cl.chance_accuracy_4_balanced_classes.toFixed(2)}`],
+                    [`Deployed ${cl.deployed_model}`, `accuracy ${cl.deployed_accuracy.toFixed(4)}`],
+                ];
+                box.innerHTML =
+                    rows.map(([k, v]) => `<div class="metric-row"><span class="metric-label">${k}</span><span class="metric-value">${v}</span></div>`).join('') +
+                    `<p class="muted mt" style="font-size:0.92rem;">${a.verdict}</p>`;
+            } catch (err) {
+                console.error('Signal audit error:', err);
+                box.innerHTML = '<div class="error">Signal audit unavailable — run <code>python analysis/signal_audit.py</code>.</div>';
+            }
+        }
+
+        function setCount(id, v, decimals) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (typeof v !== 'number' || !isFinite(v)) { el.textContent = '—'; return; }
+            window.countUp(el, v, { decimals: decimals != null ? decimals : 4 });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            regressionSection();
+            classificationSection();
+            loadFeatureImportance();
+            trainingInfo();
+            loadSignalAudit();
+        });
+    </script>
+</body>
+</html>

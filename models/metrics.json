@@ -1,0 +1,64 @@
+{
+  "results": {
+    "Baseline": {
+      "MAE": 4573.2937,
+      "RMSE": 5595.92,
+      "R2": -0.8572
+    },
+    "RandomForest": {
+      "MAE": 3564.7347,
+      "RMSE": 4149.2871,
+      "R2": -0.0211
+    },
+    "GradientBoosting": {
+      "MAE": 3705.0916,
+      "RMSE": 4317.579,
+      "R2": -0.1056
+    }
+  },
+  "best_model": "RandomForest",
+  "target_column": "consumption_liters",
+  "feature_columns": [
+    "region_Central",
+    "region_East",
+    "region_North",
+    "region_South",
+    "region_West",
+    "month",
+    "day_of_week",
+    "is_weekend",
+    "lag_1",
+    "lag_7",
+    "rolling_mean_7",
+    "rolling_mean_14"
+  ],
+  "split": {
+    "method": "chronological_80_20_no_shuffle",
+    "test_size": 0.2
+  },
+  "train_rows": 660,
+  "test_rows": 170,
+  "train_date_range": [
+    "2023-01-15",
+    "2023-05-26"
+  ],
+  "test_date_range": [
+    "2023-05-27",
+    "2023-06-29"
+  ],
+  "dataset": {
+    "source": "data/raw/water_consumption_forecasting.csv",
+    "rows": 900,
+    "regions": [
+      "Central",
+      "East",
+      "North",
+      "South",
+      "West"
+    ],
+    "date_range": [
+      "2023-01-01",
+      "2023-06-29"
+    ]
+  }
+}
